@@ -227,9 +227,9 @@ def load_config(path: Path | None = None) -> AppConfig:
     cwd = Path.cwd()
     home = Path.home()
     candidates = [
-        home / ".mewcode" / "config.yaml",
-        cwd / ".mewcode" / "config.yaml",
-        cwd / ".mewcode" / "config.local.yaml",
+        home / ".codeferry" / "config.yaml",
+        cwd / ".codeferry" / "config.yaml",
+        cwd / ".codeferry" / "config.local.yaml",
     ]
 
     merged: AppConfig | None = None
@@ -244,7 +244,7 @@ def load_config(path: Path | None = None) -> AppConfig:
 
     if merged is None:
         raise ConfigError(
-            "No config file found. Expected .mewcode/config.yaml "
-            "in project or ~/.mewcode/config.yaml"
+            "No config file found. Expected .codeferry/config.yaml "
+            "in project or ~/.codeferry/config.yaml"
         )
     return merged
