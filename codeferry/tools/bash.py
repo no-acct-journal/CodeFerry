@@ -4,7 +4,7 @@ import asyncio
 
 from pydantic import BaseModel, Field
 
-from mewcode.tools.base import Tool, ToolResult
+from codeferry.tools.base import Tool, ToolResult
 
 MAX_TIMEOUT = 600
 

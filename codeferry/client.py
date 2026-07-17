@@ -8,14 +8,14 @@ from typing import Any, AsyncIterator
 from anthropic import AsyncAnthropic
 from openai import AsyncOpenAI
 
-from mewcode.config import ProviderConfig
-from mewcode.conversation import ConversationManager
-from mewcode.serialization import (
+from codeferry.config import ProviderConfig
+from codeferry.conversation import ConversationManager
+from codeferry.serialization import (
     build_anthropic_messages,
     build_chat_completion_messages,
     build_openai_input,
 )
-from mewcode.tools.base import (
+from codeferry.tools.base import (
     StreamEnd,
     StreamEvent,
     TextDelta,
@@ -132,7 +132,7 @@ class AnthropicClient(LLMClient):
         if not api_key:
             raise AuthenticationError(
                 "Anthropic API key not found. "
-                "Set it in .mewcode/config.yaml or via ANTHROPIC_API_KEY env var."
+                "Set it in .codeferry/config.yaml or via ANTHROPIC_API_KEY env var."
             )
         self._client = AsyncAnthropic(api_key=api_key, base_url=config.base_url)
 
@@ -291,7 +291,7 @@ class OpenAIClient(LLMClient):
         if not api_key:
             raise AuthenticationError(
                 "OpenAI API key not found. "
-                "Set it in .mewcode/config.yaml or via OPENAI_API_KEY env var."
+                "Set it in .codeferry/config.yaml or via OPENAI_API_KEY env var."
             )
         self._client = AsyncOpenAI(api_key=api_key, base_url=config.base_url)
 
@@ -414,7 +414,7 @@ class OpenAICompatClient(LLMClient):
         if not api_key:
             raise AuthenticationError(
                 "OpenAI-compatible API key not found. "
-                "Set it in .mewcode/config.yaml or via OPENAI_API_KEY env var."
+                "Set it in .codeferry/config.yaml or via OPENAI_API_KEY env var."
             )
         self._client = AsyncOpenAI(api_key=api_key, base_url=config.base_url)
 

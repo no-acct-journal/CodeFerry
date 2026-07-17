@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from mewcode.tools.base import SKIP_DIRS, Tool, ToolResult
+from codeferry.tools.base import SKIP_DIRS, Tool, ToolResult
 
 
 class Params(BaseModel):

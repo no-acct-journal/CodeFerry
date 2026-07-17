@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
-from mewcode.tools.base import Tool, ToolResult
+from codeferry.tools.base import Tool, ToolResult
 
 if TYPE_CHECKING:
-    from mewcode.cache import FileCache
-    from mewcode.tools.file_state_cache import FileStateCache
+    from codeferry.cache import FileCache
+    from codeferry.tools.file_state_cache import FileStateCache
 
 
 class Params(BaseModel):

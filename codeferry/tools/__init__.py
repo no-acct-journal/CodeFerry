@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from mewcode.tools.base import Tool
+from codeferry.tools.base import Tool
 
 if TYPE_CHECKING:
-    from mewcode.cache import FileCache
+    from codeferry.cache import FileCache
 
 
 class ToolRegistry:
@@ -138,13 +138,13 @@ class ToolRegistry:
 
 
 def create_default_registry(file_cache: FileCache | None = None, file_history: Any = None) -> ToolRegistry:
-    from mewcode.tools.bash import Bash
-    from mewcode.tools.edit_file import EditFile
-    from mewcode.tools.file_state_cache import FileStateCache
-    from mewcode.tools.glob import Glob
-    from mewcode.tools.grep import Grep
-    from mewcode.tools.read_file import ReadFile
-    from mewcode.tools.write_file import WriteFile
+    from codeferry.tools.bash import Bash
+    from codeferry.tools.edit_file import EditFile
+    from codeferry.tools.file_state_cache import FileStateCache
+    from codeferry.tools.glob import Glob
+    from codeferry.tools.grep import Grep
+    from codeferry.tools.read_file import ReadFile
+    from codeferry.tools.write_file import WriteFile
 
     file_state_cache = FileStateCache()
 
