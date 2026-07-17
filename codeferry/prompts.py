@@ -1,7 +1,3 @@
-# 来源：公众号@小林coding
-# 后端八股网站：xiaolincoding.com
-# Agent网站：xiaolinnote.com
-# 简历模版：jianli.xiaolinnote.com
 """codeferry 的系统提示词（system prompt）构建。"""
 
 from __future__ import annotations
@@ -35,7 +31,7 @@ class PromptBuilder:
 
 
 # ---------------------------------------------------------------------------
-# prompt 分段（对应 Go 版 sections.go，优先级 0-95）
+# prompt 分段
 # ---------------------------------------------------------------------------
 
 IDENTITY_SECTION = PromptSection(
@@ -162,7 +158,7 @@ def environment_section(work_dir: str) -> PromptSection:
 
 
 # ---------------------------------------------------------------------------
-# Plan 模式提示语（对应 Go 版 plan_mode.go）
+# Plan 模式提示语（
 # ---------------------------------------------------------------------------
 
 _PLAN_MODE_FULL_REMINDER = """\
