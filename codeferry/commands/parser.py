@@ -1,11 +1,6 @@
-# 来源：公众号@小林coding
-# 后端八股网站：xiaolincoding.com
-# Agent网站：xiaolinnote.com
-# 简历模版：jianli.xiaolinnote.com
-
 from __future__ import annotations
 
-from mewcode.commands.registry import CommandRegistry
+from codeferry.commands.registry import CommandRegistry
 
 
 def parse_command(text: str) -> tuple[str, str, bool]:

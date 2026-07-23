@@ -1,5 +1,5 @@
-from mewcode.commands.parser import complete, parse_command
-from mewcode.commands.registry import (
+from codeferry.commands.parser import complete, parse_command
+from codeferry.commands.registry import (
     Command,
     CommandContext,
     CommandHandler,
