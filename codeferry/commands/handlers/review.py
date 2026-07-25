@@ -4,26 +4,25 @@ from codeferry.commands.registry import Command, CommandContext, CommandType
 
 
 REVIEW_PROMPT = (
-    "请审查当前 git diff 中的代码变更。重点关注：\n"
-    "1. 逻辑错误\n"
-    "2. 安全问题\n"
-    "3. 性能问题\n"
-    "4. 代码风格"
+    "Please review the code changes in the current git diff. Focus on:\n"
+    "1. Logic errors\n"
+    "2. Security issues\n"
+    "3. Performance issues\n"
+    "4. Code style"
 )
 
 
 async def handle_review(ctx: CommandContext) -> None:
     prompt = REVIEW_PROMPT
     if ctx.args:
-        prompt += f"\n\n额外关注：{ctx.args}"
+        prompt += f"\n\nAdditional focus: {ctx.args}"
     ctx.ui.send_user_message(prompt)
 
 
 REVIEW_COMMAND = Command(
     name="review",
-    description="审查代码变更",
-    usage="/review [额外关注点]",
+    description="Review code changes",
+    usage="/review [additional focus]",
     type=CommandType.PROMPT,
     handler=handle_review,
 )
-

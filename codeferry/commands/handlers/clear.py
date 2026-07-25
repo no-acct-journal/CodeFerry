@@ -21,14 +21,13 @@ async def handle_clear(ctx: CommandContext) -> None:
 
     ctx.config["clear_chat"]()
     ctx.ui.refresh_status()
-    ctx.ui.add_system_message("对话已清除，新会话已创建")
+    ctx.ui.add_system_message("Conversation cleared. A new session has been created.")
 
 
 CLEAR_COMMAND = Command(
     name="clear",
-    description="清除对话历史",
+    description="Clear conversation history",
     usage="/clear",
     type=CommandType.LOCAL_UI,
     handler=handle_clear,
 )
-

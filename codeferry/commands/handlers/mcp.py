@@ -1,7 +1,7 @@
-# 来源：公众号@小林coding
-# 后端八股网站：xiaolincoding.com
-# Agent网站：xiaolinnote.com
-# 简历模版：jianli.xiaolinnote.com
+# Source: WeChat public account @Xiaolin Coding
+# Backend interview prep site: xiaolincoding.com
+# Agent site: xiaolinnote.com
+# Resume template: jianli.xiaolinnote.com
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ async def handle_mcp(ctx: CommandContext) -> None:
         ctx.ui.add_system_message("No MCP servers connected")
         return
 
-    lines = ["MCP 状态", "─────────────"]
+    lines = ["MCP Status", "─────────────"]
     lines.append(info)
 
     mcp_mgr = getattr(app, "mcp_manager", None)
@@ -38,7 +38,7 @@ async def handle_mcp(ctx: CommandContext) -> None:
 MCP_COMMAND = Command(
     name="mcp",
     aliases=[],
-    description="显示 MCP 服务器状态",
+    description="Show MCP server status",
     usage="/mcp",
     type=CommandType.LOCAL,
     handler=handle_mcp,

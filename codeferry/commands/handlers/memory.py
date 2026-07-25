@@ -1,7 +1,7 @@
-# 来源：公众号@小林coding
-# 后端八股网站：xiaolincoding.com
-# Agent网站：xiaolinnote.com
-# 简历模版：jianli.xiaolinnote.com
+# Source: WeChat public account @Xiaolin Coding
+# Backend interview prep site: xiaolincoding.com
+# Agent site: xiaolinnote.com
+# Resume template: jianli.xiaolinnote.com
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from codeferry.commands.registry import Command, CommandContext, CommandType
 async def handle_memory(ctx: CommandContext) -> None:
     mm = ctx.memory_manager
     if mm is None:
-        ctx.ui.add_system_message("记忆管理器未初始化")
+        ctx.ui.add_system_message("Memory manager is not initialized")
         return
 
 
@@ -28,26 +28,25 @@ async def handle_memory(ctx: CommandContext) -> None:
 
     elif sub == "clear":
         mm.clear()
-        ctx.ui.add_system_message("所有自动记忆已清空。")
+        ctx.ui.add_system_message("All automatic memories have been cleared.")
 
     elif sub == "edit":
         ctx.ui.add_system_message(
-            f"编辑记忆文件：\n"
-            f"  用户级: {mm.user_path}\n"
-            f"  项目级: {mm.project_path}"
+            f"Edit memory files:\n"
+            f"  User level: {mm.user_path}\n"
+            f"  Project level: {mm.project_path}"
         )
 
     else:
         ctx.ui.add_system_message(
-            "用法: /memory [list | clear | edit]"
+            "Usage: /memory [list | clear | edit]"
         )
 
 
 MEMORY_COMMAND = Command(
     name="memory",
-    description="记忆管理",
+    description="Memory management",
     usage="/memory [list | clear | edit]",
     type=CommandType.LOCAL,
     handler=handle_memory,
 )
-

@@ -5,13 +5,13 @@ from codeferry.commands.registry import Command, CommandContext, CommandType
 
 async def handle_compact(ctx: CommandContext) -> None:
     if ctx.agent is None:
-        ctx.ui.add_system_message("Agent 未初始化")
+        ctx.ui.add_system_message("Agent is not initialized")
         return
 
 
     input_tokens, _ = ctx.ui.get_token_count()
     if input_tokens < 5000:
-        ctx.ui.add_system_message(f"当前 token 数 {input_tokens:,}，无需压缩")
+        ctx.ui.add_system_message(f"Current token count is {input_tokens:,}; compaction is not needed")
         return
 
     from codeferry.agent import CompactNotification, ErrorEvent
@@ -19,9 +19,9 @@ async def handle_compact(ctx: CommandContext) -> None:
 
     result = await ctx.agent.manual_compact(ctx.conversation)
     if isinstance(result, CompactNotification):
-        # 持久化 compact_boundary，使后续 resume 可重建压缩后的状态。
-        # manual_compact 已重写了 ctx.conversation；下一次 _send_message
-        # 会重新捕获 history_cursor，所以这里无需手动重置。
+        # Persist compact_boundary so later resumes can rebuild the compacted state.
+        # manual_compact has already rewritten ctx.conversation; the next _send_message
+        # will capture history_cursor again, so no manual reset is needed here.
         if ctx.session is not None and result.boundary is not None:
             from codeferry.memory.session import make_compact_boundary
 
@@ -30,15 +30,14 @@ async def handle_compact(ctx: CommandContext) -> None:
             )
         ctx.ui.add_system_message(result.message)
     elif isinstance(result, ErrorEvent):
-        ctx.ui.add_system_message(f"压缩失败: {result.message}")
+        ctx.ui.add_system_message(f"Compaction failed: {result.message}")
 
 
 COMPACT_COMMAND = Command(
     name="compact",
     aliases=["c"],
-    description="压缩上下文",
-    usage="/compact [保留重点]",
+    description="Compact context",
+    usage="/compact [focus to preserve]",
     type=CommandType.LOCAL,
     handler=handle_compact,
 )
-
