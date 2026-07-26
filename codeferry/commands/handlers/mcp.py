@@ -1,8 +1,3 @@
-# Source: WeChat public account @Xiaolin Coding
-# Backend interview prep site: xiaolincoding.com
-# Agent site: xiaolinnote.com
-# Resume template: jianli.xiaolinnote.com
-
 from __future__ import annotations
 
 from codeferry.commands.registry import Command, CommandContext, CommandType
@@ -15,7 +10,7 @@ async def handle_mcp(ctx: CommandContext) -> None:
         ctx.ui.add_system_message("No MCP servers connected")
         return
 
-    lines = ["MCP Status", "─────────────"]
+    lines = ["MCP 状态", "─────────────"]
     lines.append(info)
 
     mcp_mgr = getattr(app, "mcp_manager", None)
@@ -38,7 +33,7 @@ async def handle_mcp(ctx: CommandContext) -> None:
 MCP_COMMAND = Command(
     name="mcp",
     aliases=[],
-    description="Show MCP server status",
+    description="显示 MCP 服务器状态",
     usage="/mcp",
     type=CommandType.LOCAL,
     handler=handle_mcp,
