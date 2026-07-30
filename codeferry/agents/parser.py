@@ -1,7 +1,3 @@
-# Source: WeChat public account @xiaolincoding
-# Backend interview prep site: xiaolincoding.com
-# Agent site: xiaolinnote.com
-# Resume templates: jianli.xiaolinnote.com
 from __future__ import annotations
 
 import logging
