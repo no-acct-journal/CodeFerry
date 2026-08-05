@@ -160,21 +160,21 @@ class AgentTool(Tool):
                 source="builtin",
             )
 
-        # 选择 LLM 客户端
+        # Select the LLM client.
         client = self._select_llm(p, definition)
 
-        # 判断是否后台运行
+        # Decide whether to run in the background.
         is_background = p.run_in_background or definition.background
         if self._enable_fork:
             is_background = True
 
-        # 过滤工具（coordinator 模式可能缩减了注册表，这里用完整注册表）
+        # Filter tools. Coordinator mode may shrink the registry, so use the full registry here.
         _base_registry = getattr(self._parent_agent, '_full_registry', None) or self._parent_agent.registry
         filtered_registry = resolve_agent_tools(
             _base_registry, definition, is_background
         )
 
-        # 为子 agent 创建权限检查器
+        # Create a permission checker for the subagent.
         pm_str = definition.permission_mode
         pm_enum = getattr(
             PermissionMode,
@@ -188,7 +188,7 @@ class AgentTool(Tool):
             mode=pm_enum,
         )
 
-        # 创建子 agent
+        # Create the subagent.
         sub_agent = AgentClass(
             client=client,
             registry=filtered_registry,
@@ -203,15 +203,16 @@ class AgentTool(Tool):
         sub_agent.parent_id = self._parent_agent.agent_id
         sub_agent.trace_id = self._parent_agent.trace_id or self._parent_agent.agent_id
 
-        # fork 子 agent 继承父 agent 的替换状态，确保共享的 tool_use_id 做出一致的
-        # 决策——这样父子共享的 prompt cache 前缀才能保持字节级一致
+        # Forked subagents inherit the parent's replacement state so shared tool_use_id
+        # values make consistent decisions. This keeps the shared parent/child prompt
+        # cache prefix byte-identical.
         if p.subagent_type is None:
             from codeferry.context import clone_replacement_state
             sub_agent.replacement_state = clone_replacement_state(
                 self._parent_agent.replacement_state
             )
 
-        # 注册追踪节点
+        # Register trace node.
         trace_node = self._trace_manager.create(
             agent_type=definition.agent_type,
             parent_id=self._parent_agent.agent_id,
@@ -240,7 +241,7 @@ class AgentTool(Tool):
                 f"Do NOT wait, sleep, or poll. Report the task ID to the user and move on.",
             )
 
-        # 前台同步执行
+        # Foreground synchronous execution.
         try:
             if is_fork:
                 result_text = await sub_agent.run_to_completion("", conversation)
@@ -295,7 +296,7 @@ class AgentTool(Tool):
                 counter += 1
             teammate_name = f"{base_name}-{counter}"
 
-        # 1. 加载 agent 定义
+        # 1. Load agent definition.
         definition: AgentDef
         conversation: ConversationManager | None = None
         is_fork = False
@@ -331,20 +332,20 @@ class AgentTool(Tool):
                 source="builtin",
             )
 
-        # 2. 创建 worktree
+        # 2. Create worktree.
         wt_name = f"team-{p.team_name}/{teammate_name}"
         try:
             wt = await self._worktree_manager.create(wt_name, "HEAD")
         except Exception as e:
             return ToolResult(output=f"Failed to create worktree for teammate: {e}", is_error=True)
 
-        # 3. 选择 LLM
+        # 3. Select LLM.
         client = self._select_llm(p, definition)
 
-        # 4. 检测后端类型
+        # 4. Detect backend type.
         backend = self._team_manager.detect_backend()
 
-        # 5. 构建队友的工具集
+        # 5. Build teammate tool set.
         trace_node = self._trace_manager.create(
             agent_type=definition.agent_type,
             parent_id=self._parent_agent.agent_id,
@@ -374,7 +375,7 @@ class AgentTool(Tool):
         _tm_tools = [t.name for t in teammate_registry.list_tools()]
         log.info("[teammate] result_tools=%d names=%s", len(_tm_tools), _tm_tools)
 
-        # 6. 创建子 agent 并附加队友专属指令
+        # 6. Create subagent and attach teammate-specific instructions.
         instructions = (definition.system_prompt or "") + TEAMMATE_ADDENDUM
 
         checker = PermissionChecker(
@@ -401,7 +402,7 @@ class AgentTool(Tool):
         sub_agent.team_name = p.team_name
         sub_agent._team_manager = self._team_manager
 
-        # 7. 注册名称和成员信息
+        # 7. Register name and member information.
         AgentNameRegistry.instance().register(teammate_name, agent_id)
 
         member = TeammateInfo(
@@ -415,13 +416,13 @@ class AgentTool(Tool):
         )
         self._team_manager.register_member(p.team_name, member)
 
-        # 8. 按后端类型启动队友
+        # 8. Launch teammate by backend type.
         if backend in (BackendType.TMUX, BackendType.ITERM2):
             return self._spawn_pane_teammate(
                 p, team, member, backend, wt, agent_id, teammate_name
             )
 
-        # 进程内模式：直接用 task_manager 执行并通知结果
+        # In-process mode: execute directly with task_manager and notify the result.
         task_id = self._task_manager.launch(
             agent=sub_agent,
             task="" if is_fork else p.prompt,

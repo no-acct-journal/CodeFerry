@@ -27,7 +27,7 @@ class CompletionPopup(Static):
         self._cursor: int = 0
 
     def show_pairs(self, pairs: list[tuple[str, str]]) -> None:
-        """以 (display_text, value) 对的形式显示候选项。"""
+        """Display candidates as (display_text, value) pairs."""
         self._displays = [d for d, _ in pairs]
         self._values = [v for _, v in pairs]
         self._cursor = 0

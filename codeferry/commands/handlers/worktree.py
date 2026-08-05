@@ -15,7 +15,7 @@ def create_worktree_command(manager: WorktreeManager) -> Command:
         args = ctx.args.strip()
         if not args:
             ctx.ui.add_system_message(
-                "用法:\n"
+                "Usage:\n"
                 "  /worktree create <name> [base-branch]\n"
                 "  /worktree list\n"
                 "  /worktree enter <name>\n"
@@ -39,12 +39,12 @@ def create_worktree_command(manager: WorktreeManager) -> Command:
         elif sub == "status":
             _handle_status(ctx, manager)
         else:
-            ctx.ui.add_system_message(f"未知子命令: {sub}")
+            ctx.ui.add_system_message(f"Unknown subcommand: {sub}")
 
     return Command(
         name="worktree",
         aliases=["wt"],
-        description="管理 Git Worktree",
+        description="Manage Git worktrees",
         usage="/worktree <create|list|enter|exit|status>",
         type=CommandType.LOCAL,
         handler=handle_worktree,
@@ -57,7 +57,7 @@ async def _handle_create(
     args: list[str],
 ) -> None:
     if not args:
-        ctx.ui.add_system_message("用法: /worktree create <name> [base-branch]")
+        ctx.ui.add_system_message("Usage: /worktree create <name> [base-branch]")
         return
 
     name = args[0]
@@ -66,7 +66,7 @@ async def _handle_create(
     try:
         wt = await manager.create(name, base_branch)
     except Exception as e:
-        ctx.ui.add_system_message(f"创建 worktree 失败: {e}")
+        ctx.ui.add_system_message(f"Failed to create worktree: {e}")
         return
 
     try:
@@ -75,33 +75,33 @@ async def _handle_create(
             ctx.agent.work_dir = wt.path
     except Exception as e:
         ctx.ui.add_system_message(
-            f"Worktree 已创建但进入失败: {e}\n路径: {wt.path}"
+            f"Worktree was created but could not be entered: {e}\nPath: {wt.path}"
         )
         return
 
     ctx.ui.add_system_message(
-        f"已创建并进入 worktree: {name}\n"
-        f"路径: {wt.path}\n"
-        f"分支: {wt.branch}\n"
-        f"基于: {base_branch}"
+        f"Created and entered worktree: {name}\n"
+        f"Path: {wt.path}\n"
+        f"Branch: {wt.branch}\n"
+        f"Based on: {base_branch}"
     )
 
 
 def _handle_list(ctx: CommandContext, manager: WorktreeManager) -> None:
     worktrees = manager.list_worktrees()
     if not worktrees:
-        ctx.ui.add_system_message("当前没有活跃的 worktree")
+        ctx.ui.add_system_message("No active worktrees")
         return
 
     current = manager.current_session
-    lines = ["活跃的 Worktrees:", "─────────────────"]
+    lines = ["Active Worktrees:", "─────────────────"]
     for wt in worktrees:
-        marker = " ← 当前" if current and current.worktree_name == wt.name else ""
+        marker = " <- current" if current and current.worktree_name == wt.name else ""
         lines.append(
             f"  {wt.name}{marker}\n"
-            f"    路径: {wt.path}\n"
-            f"    分支: {wt.branch}\n"
-            f"    创建: {wt.created.strftime('%Y-%m-%d %H:%M:%S')}"
+            f"    Path: {wt.path}\n"
+            f"    Branch: {wt.branch}\n"
+            f"    Created: {wt.created.strftime('%Y-%m-%d %H:%M:%S')}"
         )
     ctx.ui.add_system_message("\n".join(lines))
 
@@ -112,7 +112,7 @@ async def _handle_enter(
     args: list[str],
 ) -> None:
     if not args:
-        ctx.ui.add_system_message("用法: /worktree enter <name>")
+        ctx.ui.add_system_message("Usage: /worktree enter <name>")
         return
 
     name = args[0]
@@ -120,9 +120,9 @@ async def _handle_enter(
         session = await manager.enter(name)
         if ctx.agent:
             ctx.agent.work_dir = session.worktree_path
-        ctx.ui.add_system_message(f"已进入 worktree: {name}\n路径: {session.worktree_path}")
+        ctx.ui.add_system_message(f"Entered worktree: {name}\nPath: {session.worktree_path}")
     except Exception as e:
-        ctx.ui.add_system_message(f"进入 worktree 失败: {e}")
+        ctx.ui.add_system_message(f"Failed to enter worktree: {e}")
 
 
 async def _handle_exit(
@@ -132,7 +132,7 @@ async def _handle_exit(
 ) -> None:
     session = manager.get_current_session()
     if session is None:
-        ctx.ui.add_system_message("当前不在任何 worktree 中")
+        ctx.ui.add_system_message("You are not currently in a worktree")
         return
 
     remove = "--remove" in args
@@ -143,26 +143,26 @@ async def _handle_exit(
         await manager.exit(session.worktree_name, action=action, discard_changes=discard)
         if ctx.agent:
             ctx.agent.work_dir = session.original_cwd
-        msg = f"已退出 worktree: {session.worktree_name}"
+        msg = f"Exited worktree: {session.worktree_name}"
         if remove:
-            msg += "（已删除）"
+            msg += " (removed)"
         ctx.ui.add_system_message(msg)
     except Exception as e:
-        ctx.ui.add_system_message(f"退出 worktree 失败: {e}")
+        ctx.ui.add_system_message(f"Failed to exit worktree: {e}")
 
 
 def _handle_status(ctx: CommandContext, manager: WorktreeManager) -> None:
     session = manager.get_current_session()
     if session is None:
-        ctx.ui.add_system_message("当前不在任何 worktree 中")
+        ctx.ui.add_system_message("You are not currently in a worktree")
         return
 
     lines = [
-        "Worktree 会话状态:",
+        "Worktree Session Status:",
         "──────────────────",
-        f"  名称: {session.worktree_name}",
-        f"  路径: {session.worktree_path}",
-        f"  原始目录: {session.original_cwd}",
-        f"  原始分支: {session.original_branch}",
+        f"  Name: {session.worktree_name}",
+        f"  Path: {session.worktree_path}",
+        f"  Original directory: {session.original_cwd}",
+        f"  Original branch: {session.original_branch}",
     ]
     ctx.ui.add_system_message("\n".join(lines))

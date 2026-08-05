@@ -38,7 +38,7 @@ class Rule:
 def parse_rule(raw: str, effect: Effect) -> Rule:
     m = _RULE_RE.match(raw.strip())
     if not m:
-        raise ValueError(f"无效的规则语法: {raw}")
+        raise ValueError(f"Invalid rule syntax: {raw}")
     return Rule(tool_name=m.group(1), pattern=m.group(2), effect=effect)
 
 

@@ -1,4 +1,4 @@
-"""codeferry 的系统提示词（system prompt）构建。"""
+"""System prompt construction for codeferry."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class PromptBuilder:
 
 
 # ---------------------------------------------------------------------------
-# prompt 分段
+# Prompt sections
 # ---------------------------------------------------------------------------
 
 IDENTITY_SECTION = PromptSection(
@@ -158,7 +158,7 @@ def environment_section(work_dir: str) -> PromptSection:
 
 
 # ---------------------------------------------------------------------------
-# Plan 模式提示语（
+# Plan mode reminder
 # ---------------------------------------------------------------------------
 
 _PLAN_MODE_FULL_REMINDER = """\
@@ -230,7 +230,7 @@ def build_plan_mode_reminder(
 
 
 # ---------------------------------------------------------------------------
-# 对外接口
+# Public interface
 # ---------------------------------------------------------------------------
 
 def build_system_prompt(

@@ -17,7 +17,7 @@ def parse_command(text: str) -> tuple[str, str, bool]:
 
 
 def complete(registry: CommandRegistry, prefix: str) -> list[tuple[str, str]]:
-    """返回匹配命令的 (display_text, command_value) 列表。"""
+    """Return matching commands as (display_text, command_value) pairs."""
     prefix = prefix.lstrip("/")
     seen: set[str] = set()
     matches: list[tuple[str, str]] = []
@@ -34,4 +34,3 @@ def complete(registry: CommandRegistry, prefix: str) -> list[tuple[str, str]]:
             matches.append((display, "/" + cmd.name))
     matches.sort(key=lambda x: x[1])
     return matches[:8]
-

@@ -26,14 +26,14 @@ def create_trace_command(trace_manager: TraceManager, lead_agent_id: str = "") -
     async def handler(ctx: CommandContext) -> None:
         nodes = list(trace_manager._nodes.values())
         if not nodes:
-            ctx.ui.add_system_message("没有 Agent 追踪记录")
+            ctx.ui.add_system_message("No agent trace records")
             return
 
         parent_map: dict[str | None, list] = {}
         for n in nodes:
             parent_map.setdefault(n.parent_id, []).append(n)
 
-        lines = ["Agent 追踪树:"]
+        lines = ["Agent Trace Tree:"]
 
 
         def _render(parent_id: str | None, indent: int) -> None:
@@ -64,13 +64,13 @@ def create_trace_command(trace_manager: TraceManager, lead_agent_id: str = "") -
 
         total_in = sum(n.input_tokens for n in nodes)
         total_out = sum(n.output_tokens for n in nodes)
-        lines.append(f"\n  合计: {len(nodes)} agents, ↑{total_in} ↓{total_out}")
+        lines.append(f"\n  Total: {len(nodes)} agents, ↑{total_in} ↓{total_out}")
 
         ctx.ui.add_system_message("\n".join(lines))
 
     return Command(
         name="trace",
-        description="查看 Agent 父子追踪树（/trace）",
+        description="View the agent parent-child trace tree (/trace)",
         type=CommandType.LOCAL,
         handler=handler,
         aliases=["tree"],

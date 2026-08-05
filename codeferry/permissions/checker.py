@@ -39,7 +39,7 @@ class PermissionChecker:
     def check(self, tool: Tool, arguments: dict[str, Any]) -> Decision:
         content = extract_content(tool.name, arguments)
 
-        # Layer 0: Plan 模式例外放行
+        # Layer 0: Plan mode exceptions.
         if self.mode == PermissionMode.PLAN:
             if tool.name in _PLAN_MODE_ALLOWED_TOOLS:
                 return Decision(effect="allow", reason="Plan mode: allowed tool")
@@ -47,38 +47,38 @@ class PermissionChecker:
                 if self._is_plan_file(content):
                     return Decision(effect="allow", reason="Plan mode: plan file write")
 
-        # Layer 1: 安全的只读命令（自动放行）
+        # Layer 1: Safe read-only commands are allowed automatically.
         if tool.category == "command" and is_safe_command(content or ""):
             return Decision(effect="allow", reason="Safe read-only command")
 
-        # Layer 1b: 危险命令黑名单（仅 Bash）
+        # Layer 1b: Dangerous command blocklist for Bash only.
         if tool.category == "command":
             hit, reason = self.detector.detect(content)
             if hit:
-                return Decision(effect="deny", reason=f"危险命令拦截: {reason}")
+                return Decision(effect="deny", reason=f"Dangerous command blocked: {reason}")
 
-        # Layer 2: 路径沙箱（仅文件类工具）
+        # Layer 2: Path sandbox for file tools only.
         if tool.category in ("read", "write") and content:
             ok, reason = self.sandbox.check(content)
             if not ok:
-                return Decision(effect="deny", reason=f"路径沙箱拦截: {reason}")
+                return Decision(effect="deny", reason=f"Path sandbox blocked request: {reason}")
 
-        # Layer 3: 规则引擎匹配
+        # Layer 3: Rule engine matching.
         rule_result = self.rule_engine.evaluate(tool.name, content)
         if rule_result == "allow":
-            return Decision(effect="allow", reason="权限规则放行")
+            return Decision(effect="allow", reason="Permission rule allowed request")
         if rule_result == "deny":
-            return Decision(effect="deny", reason="权限规则拒绝")
+            return Decision(effect="deny", reason="Permission rule denied request")
 
-        # Layer 4: 权限模式兜底判定
+        # Layer 4: Permission mode fallback.
         effect = mode_decide(self.mode, tool.category)
         if effect == "allow":
-            return Decision(effect="allow", reason=f"权限模式 {self.mode.value} 放行")
+            return Decision(effect="allow", reason=f"Permission mode {self.mode.value} allowed request")
         if effect == "deny":
-            return Decision(effect="deny", reason=f"权限模式 {self.mode.value} 拒绝")
+            return Decision(effect="deny", reason=f"Permission mode {self.mode.value} denied request")
 
-        # Layer 5: 触发人工确认（HITL）
-        return Decision(effect="ask", reason="需要用户确认")
+        # Layer 5: Trigger human confirmation (HITL).
+        return Decision(effect="ask", reason="User confirmation required")
 
 
     def _is_plan_file(self, target_path: str) -> bool:

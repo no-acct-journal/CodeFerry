@@ -15,7 +15,7 @@ async def handle_skill(ctx: CommandContext) -> None:
 
     loader: SkillLoader | None = ctx.config.get("skill_loader")
     if loader is None:
-        ctx.ui.add_system_message("Skill 系统未初始化")
+        ctx.ui.add_system_message("Skill system is not initialized")
         return
 
     if subcmd == "list":
@@ -26,17 +26,17 @@ async def handle_skill(ctx: CommandContext) -> None:
         await _handle_reload(ctx, loader)
     else:
         ctx.ui.add_system_message(
-            f"未知子命令：{subcmd}\n用法：/skill list | /skill info <name> | /skill reload"
+            f"Unknown subcommand: {subcmd}\nUsage: /skill list | /skill info <name> | /skill reload"
         )
 
 
 def _handle_list(ctx: CommandContext, loader: SkillLoader) -> None:
     catalog = loader.get_catalog()
     if not catalog:
-        ctx.ui.add_system_message("没有已加载的 Skill")
+        ctx.ui.add_system_message("No skills loaded")
         return
 
-    lines = ["已加载的 Skill："]
+    lines = ["Loaded Skills:"]
     for name, desc in catalog:
         source = loader.get_source_label(name)
         lines.append(f"  {name:<20} {desc}  [{source}]")
@@ -45,12 +45,12 @@ def _handle_list(ctx: CommandContext, loader: SkillLoader) -> None:
 
 def _handle_info(ctx: CommandContext, loader: SkillLoader, name: str) -> None:
     if not name:
-        ctx.ui.add_system_message("用法：/skill info <name>")
+        ctx.ui.add_system_message("Usage: /skill info <name>")
         return
 
     skill = loader.get(name)
     if skill is None:
-        ctx.ui.add_system_message(f"未找到 Skill：{name}")
+        ctx.ui.add_system_message(f"Skill not found: {name}")
         return
 
     source = loader.get_source_label(name)
@@ -76,12 +76,12 @@ async def _handle_reload(ctx: CommandContext, loader: SkillLoader) -> None:
         from codeferry.commands.handlers.skill_register import register_skill_commands
         register_skill_commands(registry, loader, ctx.config.get("skill_executor"))
 
-    ctx.ui.add_system_message(f"已重新加载 {len(skills)} 个 Skill")
+    ctx.ui.add_system_message(f"Reloaded {len(skills)} skills")
 
 
 SKILL_COMMAND = Command(
     name="skill",
-    description="管理 Skill 技能包",
+    description="Manage skill packages",
     usage="/skill list | /skill info <name> | /skill reload",
     type=CommandType.LOCAL,
     handler=handle_skill,

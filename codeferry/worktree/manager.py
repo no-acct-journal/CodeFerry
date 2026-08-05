@@ -58,7 +58,7 @@ class WorktreeManager:
         )
 
     # ------------------------------------------------------------------
-    # 快速恢复：直接从文件系统读取 HEAD SHA，无需启动 git 子进程
+    # Fast recovery: read the HEAD SHA directly from the filesystem without spawning git.
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -108,7 +108,7 @@ class WorktreeManager:
             return None
 
     # ------------------------------------------------------------------
-    # 创建 worktree
+    # Create worktree.
     # ------------------------------------------------------------------
 
     async def create(self, name: str, base_branch: str = "HEAD") -> Worktree:
@@ -166,7 +166,7 @@ class WorktreeManager:
             return wt
 
     # ------------------------------------------------------------------
-    # 进入 worktree
+    # Enter worktree.
     # ------------------------------------------------------------------
 
     async def enter(self, name: str) -> WorktreeSession:
@@ -190,7 +190,7 @@ class WorktreeManager:
         return session
 
     # ------------------------------------------------------------------
-    # 退出 worktree
+    # Exit worktree.
     # ------------------------------------------------------------------
 
 
@@ -220,7 +220,7 @@ class WorktreeManager:
             await self._remove_worktree(name, wt)
 
     # ------------------------------------------------------------------
-    # 删除 worktree（内部方法）
+    # Delete worktree (internal method).
     # ------------------------------------------------------------------
 
     async def _remove_worktree(self, name: str, wt: Worktree) -> None:
@@ -237,7 +237,7 @@ class WorktreeManager:
         self.active.pop(name, None)
 
     # ------------------------------------------------------------------
-    # 自动清理
+    # Automatic cleanup.
     # ------------------------------------------------------------------
 
 
@@ -253,7 +253,7 @@ class WorktreeManager:
         return CleanupResult(kept=False)
 
     # ------------------------------------------------------------------
-    # 列出 / 查询
+    # List / query.
     # ------------------------------------------------------------------
 
     def list_worktrees(self) -> list[Worktree]:
@@ -264,7 +264,7 @@ class WorktreeManager:
         return self.current_session
 
     # ------------------------------------------------------------------
-    # 从持久化的 session 中恢复
+    # Recover from a persisted session.
     # ------------------------------------------------------------------
 
     def restore_session(self) -> WorktreeSession | None:
@@ -289,7 +289,7 @@ class WorktreeManager:
         return session
 
     # ------------------------------------------------------------------
-    # 辅助方法
+    # Helper methods.
     # ------------------------------------------------------------------
 
 

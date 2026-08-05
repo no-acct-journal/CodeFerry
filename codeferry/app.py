@@ -423,7 +423,7 @@ SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
 
 def _to_past_tense(verb: str) -> str:
-    """把现在进行时动词转换为过去式。"""
+    """Convert a progressive verb to past tense."""
     if verb.endswith("ing"):
         stem = verb[:-3]
         if stem.endswith("e"):
@@ -456,7 +456,7 @@ THINKING_VERBS = [
     "Spinning", "Sprouting", "Synthesizing", "Thinking", "Tinkering",
     "Transfiguring", "Transmuting", "Undulating", "Unfurling", "Unravelling",
     "Vibing", "Wandering", "Whisking", "Working", "Wrangling", "Zigzagging",
-]  # 共 105 个动词，与 Go 版 internal/tui/verbs.go 完全一致
+]  # 105 verbs, exactly matching the Go version in internal/tui/verbs.go.
 
 
 class ToolGroupSummary(Static, can_focus=True):
@@ -734,9 +734,10 @@ class codeferryApp(App):
         self._exit_plan_tool._is_plan_mode = lambda: self.agent.plan_mode
         self._exit_plan_tool._plan_exists = lambda: self.agent._get_plan_path().exists()
 
-        # Layer 2: 在后台异步拉取模型的 context window，不阻塞启动流程。
-        # agent 已经有一个同步解析的窗口值（来自配置 / 映射表 / 默认值）；
-        # 如果异步拉取成功，就原地升级为更准确的值。
+        # Layer 2: fetch the model context window asynchronously in the background
+        # without blocking startup. The agent already has a synchronously resolved
+        # window value from config / mapping table / default; if the async fetch
+        # succeeds, update it in place with the more accurate value.
         self.run_worker(
             self._resolve_context_window(provider), exclusive=False
         )
@@ -771,7 +772,7 @@ class codeferryApp(App):
             self.command_registry, self.skill_loader, self.skill_executor
         )
 
-        # --- Worktree 系统初始化 ---
+        # --- Worktree system initialization ---
         from codeferry.config import WorktreeConfig
         wt_cfg = self._worktree_config or WorktreeConfig()
         self.worktree_manager = WorktreeManager(
@@ -798,13 +799,13 @@ class codeferryApp(App):
             )
         )
 
-        # --- 子 agent 系统初始化 ---
+        # --- Subagent system initialization ---
         self.agent_loader = AgentLoader(
             work_dir, enable_verification=self._enable_verification_agent
         )
         self.agent_loader.load_all()
 
-        # --- Agent 团队系统初始化 ---
+        # --- Agent team system initialization ---
         from codeferry.teams.manager import TeamManager
         from codeferry.tools.team_create import TeamCreateTool
         from codeferry.tools.team_delete import TeamDeleteTool
@@ -871,7 +872,7 @@ class codeferryApp(App):
         trace_cmd = create_trace_command(self.trace_manager, self.agent.agent_id)
         self.command_registry.register_sync(trace_cmd)
 
-        # --- 协调者模式初始化（工具已注册，激活推迟到 TeamCreate 时） ---
+        # --- Coordinator mode initialization (tools are registered; activation is deferred until TeamCreate) ---
         from codeferry.tools.synthetic_output import SyntheticOutputTool
 
         self.registry.register(SyntheticOutputTool())
@@ -909,11 +910,11 @@ class codeferryApp(App):
         )
 
     async def _resolve_context_window(self, provider: ProviderConfig) -> None:
-        """Layer 2 后台 worker：异步拉取模型的 context window，
-        拉到就原地升级 agent 的窗口值。
+        """Layer 2 background worker: asynchronously fetch the model context window.
 
-        尽力而为 — resolve_context_window 不会抛异常；如果拉不到，
-        agent 继续使用同步解析得到的窗口值。
+        If a value is fetched, update the agent's window value in place.
+        This is best-effort: resolve_context_window does not raise exceptions, and
+        if no value is fetched, the agent keeps the synchronously resolved value.
         """
         await resolve_context_window(provider)
         if self.agent is not None:
@@ -925,7 +926,7 @@ class codeferryApp(App):
             self._select_provider(provider)
 
     # -----------------------------------------------------------------
-    # UIController 协议实现
+    # UIController protocol implementation
     # -----------------------------------------------------------------
 
     def add_system_message(self, text: str) -> None:
@@ -956,7 +957,7 @@ class codeferryApp(App):
         self._update_mode_label()
 
     # -----------------------------------------------------------------
-    # 命令分发
+    # Command dispatch
     # -----------------------------------------------------------------
 
 
@@ -986,11 +987,12 @@ class codeferryApp(App):
             self.agent.session_id = session.session_id
 
     def _persist_compact_boundary(self, notification: CompactNotification) -> None:
-        """Layer-2 compact 后写入 compact_boundary 记录。
+        """Write a compact_boundary record after layer-2 compaction.
 
-        将摘要 + 原样保留的尾部内联到一条记录中，resume 时只需这一条
-        就能重建压缩后的状态。之前已写入磁盘的原始前缀不会被重放。
-        没有活跃 session 或 compact 未产出 boundary 时直接跳过。
+        Inline the summary plus the preserved tail into one record, so resume only
+        needs this record to reconstruct the compacted state. The original prefix
+        already written to disk is not replayed. Skip when there is no active
+        session or compact did not produce a boundary.
         """
         if not self.session or notification.boundary is None:
             return
@@ -1018,7 +1020,7 @@ class codeferryApp(App):
 
         if name == "":
             commands = self.command_registry.list_commands()
-            lines = ["可用命令："]
+            lines = ["Available commands:"]
             for cmd in commands:
                 aliases_str = ", ".join(f"/{a}" for a in cmd.aliases)
                 name_part = f"/{cmd.name}"
@@ -1030,7 +1032,7 @@ class codeferryApp(App):
 
         cmd = self.command_registry.find(name)
         if cmd is None:
-            self._show_system_message(f"未知命令：/{name}，输入 /help 查看可用命令")
+            self._show_system_message(f"Unknown command: /{name}. Type /help to view available commands")
             return
 
         if not args and cmd.arg_prompt:
@@ -1041,10 +1043,10 @@ class codeferryApp(App):
         try:
             await cmd.handler(ctx)
         except Exception as e:
-            self._show_error(f"命令执行失败: {e}")
+            self._show_error(f"Command execution failed: {e}")
 
     # -----------------------------------------------------------------
-    # 输入处理
+    # Input handling
     # -----------------------------------------------------------------
 
     async def on_chat_input_submitted(self, event: ChatInput.Submitted) -> None:
@@ -1252,7 +1254,7 @@ class codeferryApp(App):
 
         history_cursor = len(self.conversation.history)
 
-        # 准备 AI 回复区域
+        # Prepare the AI response area.
         ai_row = Vertical(classes="ai-row")
         await chat.mount(ai_row)
         streaming_label = Static("", classes="message ai-message")
@@ -1261,7 +1263,7 @@ class codeferryApp(App):
         accumulated_text = ""
         tool_blocks: dict[str, ToolCallBlock] = {}
 
-        # 在聊天区底部启动持续旋转的加载动画
+        # Start the persistent spinner at the bottom of the chat area.
         self._thinking_start = _time.monotonic()
         self._thinking_verb = random.choice(THINKING_VERBS)
         self._spinner_idx = 0
@@ -1378,7 +1380,7 @@ class codeferryApp(App):
                     self.call_after_refresh(chat.scroll_end, animate=False)
 
                 elif isinstance(event, UsageEvent):
-                    pass  # token 展示已移除
+                    pass  # Token display has been removed.
 
                 elif isinstance(event, HookEvent):
                     status = "✓" if event.success else "✗"
@@ -1388,11 +1390,11 @@ class codeferryApp(App):
 
                 elif isinstance(event, CompactNotification):
                     self._show_system_message(event.message)
-                    # auto_compact 已重写 conversation.history（摘要 +
-                    # boundary + 保留尾部）。先持久化 boundary 记录，然后
-                    # 将游标推进到重建后的历史末尾，这样 TurnComplete/LoopComplete
-                    # 刷盘时只追加 boundary 之后的新消息，不会把已压缩的
-                    # 前缀作为普通记录重复写入。
+                    # auto_compact has rewritten conversation.history (summary +
+                    # boundary + preserved tail). Persist the boundary record first,
+                    # then advance the cursor to the end of the reconstructed history,
+                    # so TurnComplete/LoopComplete only append new messages after the
+                    # boundary and do not duplicate the compacted prefix as normal records.
                     self._persist_compact_boundary(event)
                     history_cursor = len(self.conversation.history)
 
@@ -1422,7 +1424,7 @@ class codeferryApp(App):
                             self._show_plan_approval()
                         )
 
-            # 收尾：渲染剩余的累积文本
+            # Finish by rendering any remaining accumulated text.
             if accumulated_text and streaming_label is not None:
                 await streaming_label.remove()
                 md = Markdown(accumulated_text, classes="message ai-message")
@@ -1460,7 +1462,7 @@ class codeferryApp(App):
         for task in completed:
             status_icon = "✓" if task.status == "completed" else "✗"
             self._show_system_message(
-                f"{status_icon} 后台任务完成: [{task.id}] {task.name} — {task.status}"
+                f"{status_icon} Background task finished: [{task.id}] {task.name} — {task.status}"
             )
 
             if hasattr(self, 'team_manager'):
@@ -1581,19 +1583,19 @@ class codeferryApp(App):
             pass
 
     def _start_spinner(self) -> None:
-        """启动 braille spinner 动画（每帧 80ms）。"""
+        """Start the braille spinner animation at 80ms per frame."""
         if self._spinner_timer is not None:
             return
         self._spinner_timer = self.set_interval(0.08, self._tick_spinner)
 
     def _stop_spinner(self) -> None:
-        """停止 spinner 动画。"""
+        """Stop the spinner animation."""
         if self._spinner_timer is not None:
             self._spinner_timer.stop()
             self._spinner_timer = None
 
     def _finish_streaming(self) -> None:
-        """清理所有 streaming 状态（取消或完成时调用）。"""
+        """Clear all streaming state when cancelled or completed."""
         self._streaming = False
         self._stop_spinner()
         self._stop_teammate_polling()
@@ -1606,7 +1608,7 @@ class codeferryApp(App):
             self._spinner_label = None
 
     def _tick_spinner(self) -> None:
-        """推进持久 spinner 标签上的动画帧。"""
+        """Advance the animation frame on the persistent spinner label."""
         self._spinner_idx += 1
         frame = SPINNER_FRAMES[self._spinner_idx % len(SPINNER_FRAMES)]
         elapsed = _time.monotonic() - self._thinking_start
@@ -1678,7 +1680,7 @@ class codeferryApp(App):
         self._pending_perm_request = request
         await chat.mount(widget)
         self.call_after_refresh(chat.scroll_end, animate=False)
-        # 权限提示弹窗期间禁用输入框
+        # Disable the input box while the permission prompt is visible.
         try:
             self.query_one("#chat-input").disabled = True
         except Exception:
@@ -1693,13 +1695,13 @@ class codeferryApp(App):
         if req is not None:
             req.future.set_result(event.response)
             self._pending_perm_request = None
-        # 从聊天区移除权限弹窗组件
+        # Remove the permission prompt widget from the chat area.
         try:
             widget = self.query_one("#perm-inline", InlinePermissionWidget)
             widget.remove()
         except Exception:
             pass
-        # 重新启用输入框
+        # Re-enable the input box.
         try:
             self.query_one("#chat-input").disabled = False
             self.query_one("#chat-input").focus()
@@ -1707,7 +1709,7 @@ class codeferryApp(App):
             pass
 
     # -----------------------------------------------------------------
-    # 恢复 session 的消息渲染
+    # Restore session message rendering
     # -----------------------------------------------------------------
 
     async def _render_restored_messages(self, messages: list[Message]) -> None:
@@ -1734,7 +1736,7 @@ class codeferryApp(App):
         self.call_after_refresh(chat.scroll_end, animate=False)
 
     # -----------------------------------------------------------------
-    # Session 摘要（异步后台生成）
+    # Session summary generated asynchronously in the background
     # -----------------------------------------------------------------
 
     async def _update_session_summary(self) -> None:
@@ -1807,7 +1809,7 @@ class codeferryApp(App):
             self.mcp_manager = None
 
     # -----------------------------------------------------------------
-    # 退出
+    # Exit
     # -----------------------------------------------------------------
 
     async def action_handle_ctrl_c(self) -> None:
@@ -1912,4 +1914,4 @@ class codeferryApp(App):
             pass
 
     def _update_token_label(self, input_tokens: int, output_tokens: int) -> None:
-        pass  # token 标签已从 UI 中移除
+        pass  # Token label has been removed from the UI.

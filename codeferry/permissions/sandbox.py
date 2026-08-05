@@ -37,12 +37,12 @@ class PathSandbox:
             while not ancestor.exists():
                 parent = ancestor.parent
                 if parent == ancestor:
-                    return False, f"无法解析路径: {path}"
+                    return False, f"Unable to resolve path: {path}"
                 ancestor = parent
             try:
                 resolved_ancestor = ancestor.resolve(strict=True)
             except OSError:
-                return False, f"无法解析路径: {path}"
+                return False, f"Unable to resolve path: {path}"
             real_path = resolved_ancestor / abs_path.relative_to(ancestor)
 
         for root in self._allowed_roots:
@@ -52,4 +52,4 @@ class PathSandbox:
             except ValueError:
                 continue
 
-        return False, f"路径 {path} 超出沙箱范围"
+        return False, f"Path {path} is outside the sandbox"

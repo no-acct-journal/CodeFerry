@@ -20,7 +20,7 @@ from codeferry.worktree.session import load_worktree_session, save_worktree_sess
 from codeferry.worktree.slug import flatten_slug, validate_slug
 
 # =========================================================================
-# A. Slug 校验
+# A. Slug validation
 # =========================================================================
 
 class TestValidateSlug:
@@ -109,10 +109,10 @@ class TestFileCache:
 
     def test_invalidate_nonexistent(self):
         cache = FileCache()
-        cache.invalidate("/nonexistent")  # 不应抛出异常
+        cache.invalidate("/nonexistent")  # Should not raise.
 
 # =========================================================================
-# C. 配置扩展
+# C. Config extensions
 # =========================================================================
 
 class TestWorktreeConfig:
@@ -154,7 +154,7 @@ class TestWorktreeConfig:
         assert cfg.worktree.stale_cutoff_hours == 12
 
 # =========================================================================
-# H. 会话持久化
+# H. Session persistence
 # =========================================================================
 
 class TestSessionPersistence:
@@ -195,14 +195,14 @@ class TestSessionPersistence:
         assert load_worktree_session(tmp_path) is None
 
 # =========================================================================
-# 集成辅助函数
+# Integration helper functions
 # =========================================================================
 
 class TestIntegrationHelpers:
     def test_generate_worktree_name(self):
         name = generate_worktree_name()
         assert name.startswith("agent-")
-        assert len(name) == 14  # "agent-" + 8 个十六进制字符
+        assert len(name) == 14  # "agent-" + 8 hexadecimal characters.
 
     def test_build_worktree_notice(self):
         notice = build_worktree_notice("/parent/dir", "/wt/dir")
@@ -211,7 +211,7 @@ class TestIntegrationHelpers:
         assert "WORKTREE CONTEXT" in notice
 
 # =========================================================================
-# D. WorktreeManager（需要真实的 git 仓库）
+# D. WorktreeManager (requires a real git repository)
 # =========================================================================
 
 def _init_git_repo(path: Path) -> None:
@@ -332,7 +332,7 @@ class TestWorktreeManager:
             )
 
 # =========================================================================
-# F. 变更检测与自动清理
+# F. Change detection and automatic cleanup
 # =========================================================================
 
 class TestChangeDetection:

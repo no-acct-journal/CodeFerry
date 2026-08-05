@@ -33,7 +33,7 @@ def _relative_time(meta: SessionMeta) -> str:
 
 
 class InlineResumeWidget(Vertical, can_focus=True):
-    """内联的会话恢复视图，格式与 Go 版 TUI 保持一致。"""
+    """Inline session recovery view matching the Go TUI format."""
 
     BINDINGS = [
         Binding("up", "cursor_up", "Up", priority=True),
@@ -80,7 +80,7 @@ class InlineResumeWidget(Vertical, can_focus=True):
         if self._project:
             lines.append(f"\n  [dim]{self._project}[/]\n")
 
-        for i, meta in enumerate(self._filtered[:10]):  # 最多显示 10 条
+        for i, meta in enumerate(self._filtered[:10]):  # Show up to 10 entries.
             title = meta.title or "(empty session)"
             if i == self._cursor:
                 lines.append(f"[bold cyan]❯[/] [bold]{title}[/]")

@@ -42,17 +42,17 @@ def register_skill_commands(
             async def handler(ctx: CommandContext) -> None:
                 exe = ctx.config.get("skill_executor") if executor is None else executor
                 if exe is None:
-                    ctx.ui.add_system_message("Skill 执行器未初始化")
+                    ctx.ui.add_system_message("Skill executor is not initialized")
                     return
 
                 skill_loader: SkillLoader | None = ctx.config.get("skill_loader")
                 if skill_loader is None:
-                    ctx.ui.add_system_message("Skill 加载器未初始化")
+                    ctx.ui.add_system_message("Skill loader is not initialized")
                     return
 
                 skill = skill_loader.get(name)
                 if skill is None:
-                    ctx.ui.add_system_message(f"未找到 Skill：{name}")
+                    ctx.ui.add_system_message(f"Skill not found: {name}")
                     return
 
                 if skill.mode == "fork":

@@ -5,8 +5,9 @@ from typing import Any
 
 from codeferry.conversation import Message
 
-# 把 provider 无关的内部消息序列化成各家 API 的请求格式。
-# 这一层属于「适配器」职责，对话层（ConversationManager）只管消息、不懂线上格式。
+# Serialize provider-agnostic internal messages into each API's request format.
+# This layer has adapter responsibilities; ConversationManager only manages messages
+# and does not know provider wire formats.
 
 
 def build_anthropic_messages(messages: list[Message]) -> list[dict[str, Any]]:
@@ -43,8 +44,9 @@ def build_anthropic_messages(messages: list[Message]) -> list[dict[str, Any]]:
                 })
             result.append({"role": "user", "content": content})
         else:
-            # 合并连续的 user 纯文本消息（system-reminder 或普通 user 文本）。
-            # 不合并到 tool_result 类型的 user 消息中（content 是 list）。
+            # Merge consecutive user plain-text messages, including system reminders
+            # and normal user text. Do not merge into tool_result user messages whose
+            # content is a list.
             if (
                 m.role == "user"
                 and result
@@ -83,12 +85,12 @@ def build_openai_input(messages: list[Message]) -> list[dict[str, Any]]:
 
 
 def build_chat_completion_messages(messages: list[Message]) -> list[dict[str, Any]]:
-    """OpenAI Chat Completions 格式。
+    """OpenAI Chat Completions format.
 
-    - 用户消息：{"role": "user", "content": "..."}
-    - 助手文本+工具调用：{"role": "assistant", "content": "...", "tool_calls": [...]}
-    - 工具结果：{"role": "tool", "tool_call_id": "...", "content": "..."}
-    - thinking 块被跳过（Chat Completions 不支持）。
+    - User message: {"role": "user", "content": "..."}
+    - Assistant text + tool calls: {"role": "assistant", "content": "...", "tool_calls": [...]}
+    - Tool result: {"role": "tool", "tool_call_id": "...", "content": "..."}
+    - Thinking blocks are skipped because Chat Completions does not support them.
     """
     result: list[dict[str, Any]] = []
     for m in messages:

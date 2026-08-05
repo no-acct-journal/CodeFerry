@@ -483,7 +483,7 @@ class Agent:
             if isinstance(compact_result, CompactEvent):
                 yield CompactNotification(
                     before_tokens=compact_result.before_tokens,
-                    message=f"上下文已压缩（压缩前 {compact_result.before_tokens:,} tokens）",
+                    message=f"Context compacted (before compaction: {compact_result.before_tokens:,} tokens)",
                     boundary=compact_result.boundary,
                 )
                 conversation.inject_environment(env_context)
@@ -908,7 +908,7 @@ class Agent:
 
                 if response == PermissionResponse.DENY:
                     result = ToolResult(
-                        output="Permission denied: 用户拒绝了此操作",
+                        output="Permission denied: user denied this operation",
                         is_error=True,
                     )
                     elapsed = time.monotonic() - start
@@ -1006,10 +1006,10 @@ class Agent:
             )
             return CompactNotification(
                 before_tokens=result.before_tokens,
-                message=f"上下文已压缩（压缩前 {result.before_tokens:,} tokens）",
+                message=f"Context compacted (before compaction: {result.before_tokens:,} tokens)",
                 boundary=result.boundary,
             )
-        return ErrorEvent(message=result or "压缩失败：对话历史为空或未达到压缩条件")
+        return ErrorEvent(message=result or "Compaction failed: conversation history is empty or compaction conditions were not met")
 
     async def run_to_completion(
         self, task: str, conversation: ConversationManager | None = None,

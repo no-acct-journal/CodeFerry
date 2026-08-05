@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 
-# 确保项目根目录在 sys.path 中
+# Ensure the project root is on sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from codeferry.agents.loader import AgentLoader
@@ -41,7 +41,7 @@ def check(name: str, condition: bool, detail: str = ""):
         print(msg)
 
 # ---------------------------------------------------------------------------
-# 用于测试的占位（dummy）工具
+# Dummy tools for tests.
 # ---------------------------------------------------------------------------
 class DummyTool(Tool):
     from pydantic import BaseModel as _BM
@@ -71,52 +71,52 @@ def make_registry(*names: str) -> ToolRegistry:
     return reg
 
 # ---------------------------------------------------------------------------
-# 1. Agent 定义加载
+# 1. Agent definition loading
 # ---------------------------------------------------------------------------
 
 def verify_loader():
-    print("\n== 1. Agent 定义加载 ==")
+    print("\n== 1. Agent Definition Loading ==")
     work_dir = str(Path(__file__).resolve().parent.parent)
 
-    # 不带 Verification
+    # Without Verification.
     loader = AgentLoader(work_dir, enable_verification=False)
     agents = loader.load_all()
 
-    check("内置 Explore 加载", "Explore" in agents)
-    check("内置 Plan 加载", "Plan" in agents)
-    check("内置 general-purpose 加载", "general-purpose" in agents)
-    check("Verification 默认不加载", "Verification" not in agents)
+    check("Built-in Explore loads", "Explore" in agents)
+    check("Built-in Plan loads", "Plan" in agents)
+    check("Built-in general-purpose loads", "general-purpose" in agents)
+    check("Verification is not loaded by default", "Verification" not in agents)
 
-    # 带 Verification
+    # With Verification.
     loader_v = AgentLoader(work_dir, enable_verification=True)
     agents_v = loader_v.load_all()
-    check("Verification 开关开启后加载", "Verification" in agents_v)
+    check("Verification loads when enabled", "Verification" in agents_v)
 
-    # 自定义 Agent
+    # Custom agents.
     check(
-        "自定义 security-reviewer 加载",
+        "Custom security-reviewer loads",
         "security-reviewer" in agents,
-        f"实际加载: {list(agents.keys())}",
+        f"Actually loaded: {list(agents.keys())}",
     )
     check(
-        "自定义 code-summarizer 加载",
+        "Custom code-summarizer loads",
         "code-summarizer" in agents,
-        f"实际加载: {list(agents.keys())}",
+        f"Actually loaded: {list(agents.keys())}",
     )
 
-    # 自定义 Agent 来源标记
+    # Custom agent source marker.
     if "security-reviewer" in agents:
         check(
-            "自定义 Agent source=project",
+            "Custom agent source=project",
             agents["security-reviewer"].source == "project",
         )
 
-    # 属性验证
+    # Attribute verification.
     explore = loader.get("Explore")
     check("Explore model=haiku", explore is not None and explore.model == "haiku")
     check("Explore maxTurns=30", explore is not None and explore.max_turns == 30)
     check(
-        "Explore disallowedTools 包含 Agent",
+        "Explore disallowedTools includes Agent",
         explore is not None and "Agent" in explore.disallowed_tools,
     )
 
@@ -130,20 +130,20 @@ def verify_loader():
         sr is not None and sr.permission_mode == "dontAsk",
     )
 
-    check("get 未知类型返回 None", loader.get("nonexistent") is None)
+    check("get returns None for unknown type", loader.get("nonexistent") is None)
 
     # list_agents
     agent_list = loader.list_agents()
     names = [n for n, _ in agent_list]
-    check("list_agents 包含所有加载的 Agent", len(names) >= 5)
+    check("list_agents includes all loaded agents", len(names) >= 5)
 
     return loader
 
 # ---------------------------------------------------------------------------
-# 2. 工具过滤
+# 2. Tool filtering
 # ---------------------------------------------------------------------------
 def verify_tool_filter(loader: AgentLoader):
-    print("\n== 2. 工具过滤（四层） ==")
+    print("\n== 2. Tool Filtering (Four Layers) ==")
 
     all_tools = [
         "ReadFile", "EditFile", "WriteFile", "Bash", "Grep", "Glob",
@@ -152,50 +152,50 @@ def verify_tool_filter(loader: AgentLoader):
     ]
     reg = make_registry(*all_tools)
 
-    # 内置 Explore
+    # Built-in Explore.
     explore = loader.get("Explore")
     filtered = resolve_agent_tools(reg, explore, is_background=False)
     names = {t.name for t in filtered.list_tools()}
 
-    check("L1: Agent 被全局禁止", "Agent" not in names)
-    check("L1: AskUserQuestion 被全局禁止", "AskUserQuestion" not in names)
-    check("L1: TaskStop 被全局禁止", "TaskStop" not in names)
+    check("L1: Agent is globally disallowed", "Agent" not in names)
+    check("L1: AskUserQuestion is globally disallowed", "AskUserQuestion" not in names)
+    check("L1: TaskStop is globally disallowed", "TaskStop" not in names)
     check(
-        "L4: Explore disallowedTools 生效 (EditFile)",
+        "L4: Explore disallowedTools applies (EditFile)",
         "EditFile" not in names,
     )
     check(
-        "L4: Explore disallowedTools 生效 (WriteFile)",
+        "L4: Explore disallowedTools applies (WriteFile)",
         "WriteFile" not in names,
     )
-    check("Explore 保留 ReadFile", "ReadFile" in names)
-    check("Explore 保留 Grep", "Grep" in names)
-    check("Explore 保留 Bash", "Bash" in names)
+    check("Explore keeps ReadFile", "ReadFile" in names)
+    check("Explore keeps Grep", "Grep" in names)
+    check("Explore keeps Bash", "Bash" in names)
 
-    # 自定义 Agent (source=project) — 应该触发 L2
+    # Custom agent (source=project) should trigger L2.
     sr = loader.get("security-reviewer")
     filtered_sr = resolve_agent_tools(reg, sr, is_background=False)
     names_sr = {t.name for t in filtered_sr.list_tools()}
-    check("L2: 自定义 Agent 额外禁止 EnterPlanMode", "EnterPlanMode" not in names_sr)
+    check("L2: Custom agent additionally disallows EnterPlanMode", "EnterPlanMode" not in names_sr)
 
-    # general-purpose 没有 disallow EnterPlanMode，验证内置不受 L2 限制
+    # general-purpose does not disallow EnterPlanMode; verify built-ins are not restricted by L2.
     gp_fg = resolve_agent_tools(reg, loader.get("general-purpose"), is_background=False)
     names_gp = {t.name for t in gp_fg.list_tools()}
-    check("L2: 内置 Agent 不禁止 EnterPlanMode", "EnterPlanMode" in names_gp)
+    check("L2: Built-in agent does not disallow EnterPlanMode", "EnterPlanMode" in names_gp)
 
-    # 后台白名单
+    # Background allowlist.
     gp = loader.get("general-purpose")
     filtered_bg = resolve_agent_tools(reg, gp, is_background=True)
     names_bg = {t.name for t in filtered_bg.list_tools()}
-    check("L3: 后台 Agent 不含 Agent 工具", "Agent" not in names_bg)
+    check("L3: Background agent excludes Agent tool", "Agent" not in names_bg)
     for n in names_bg:
         if n not in ASYNC_AGENT_ALLOWED_TOOLS:
-            check(f"L3: 后台工具 {n} 不在白名单中", False)
+            check(f"L3: Background tool {n} is not in the allowlist", False)
             break
     else:
-        check("L3: 后台所有工具都在白名单中", True)
+        check("L3: All background tools are in the allowlist", True)
 
-    # 白名单+黑名单组合
+    # Allowlist plus blocklist combination.
     from codeferry.agents.parser import AgentDef
     combo = AgentDef(
         agent_type="combo",
@@ -206,34 +206,34 @@ def verify_tool_filter(loader: AgentLoader):
     )
     filtered_combo = resolve_agent_tools(reg, combo)
     names_combo = {t.name for t in filtered_combo.list_tools()}
-    check("白名单+黑名单组合: 只剩 ReadFile+Grep", names_combo == {"ReadFile", "Grep"})
+    check("Allowlist plus blocklist leaves only ReadFile+Grep", names_combo == {"ReadFile", "Grep"})
 
 # ---------------------------------------------------------------------------
-# 3. Fork 模式
+# 3. Fork mode
 # ---------------------------------------------------------------------------
 
 def verify_fork():
-    print("\n== 3. Fork 模式 ==")
+    print("\n== 3. Fork Mode ==")
 
     conv = ConversationManager()
-    conv.add_user_message("你好")
-    conv.add_assistant_message("你好！有什么可以帮你的？")
-    conv.add_user_message("帮我看看 config.py")
-    conv.add_assistant_message("好的，我来读取这个文件。")
+    conv.add_user_message("Hello")
+    conv.add_assistant_message("Hello! How can I help?")
+    conv.add_user_message("Please review config.py")
+    conv.add_assistant_message("Sure, I will read this file.")
 
-    forked = build_forked_messages(conv, "顺便写个单元测试")
-    check("Fork 保留原始对话", len(forked.history) == 5)  # 4 条原始消息 + 1 条 fork 消息
+    forked = build_forked_messages(conv, "Also write a unit test")
+    check("Fork preserves the original conversation", len(forked.history) == 5)  # 4 original messages + 1 fork message.
     check(
-        "Fork 末尾注入 boilerplate",
+        "Fork injects boilerplate at the end",
         FORK_BOILERPLATE_TAG in forked.history[-1].content,
     )
-    check("Fork 末尾包含任务", "顺便写个单元测试" in forked.history[-1].content)
+    check("Fork includes the task at the end", "Also write a unit test" in forked.history[-1].content)
 
-    # 深拷贝验证
-    forked.add_user_message("额外消息")
-    check("Fork 是深拷贝，不影响原对话", len(conv.history) == 4)
+    # Deep-copy verification.
+    forked.add_user_message("Extra message")
+    check("Fork is a deep copy and does not affect the original conversation", len(conv.history) == 4)
 
-    # 未完成 tool_use 包装
+    # Pending tool_use wrapping.
     conv2 = ConversationManager()
     conv2.add_user_message("test")
     conv2.add_assistant_message(
@@ -245,20 +245,20 @@ def verify_fork():
         msg.tool_results and msg.tool_results[0].content == "interrupted"
         for msg in forked2.history
     )
-    check("未完成 tool_use 被包装为 placeholder", has_placeholder)
+    check("Pending tool_use is wrapped as a placeholder", has_placeholder)
 
-    # 禁止再 Fork
+    # Prevent double forking.
     try:
-        build_forked_messages(forked, "再 fork 一次")
-        check("禁止再 Fork", False, "应该抛出 ForkError")
+        build_forked_messages(forked, "Fork again")
+        check("Prevent double fork", False, "ForkError should be raised")
     except ForkError:
-        check("禁止再 Fork", True)
+        check("Prevent double fork", True)
 
 # ---------------------------------------------------------------------------
-# 4. Trace 链路追踪
+# 4. Trace lineage tracking
 # ---------------------------------------------------------------------------
 def verify_trace():
-    print("\n== 4. 父子链路追踪 ==")
+    print("\n== 4. Parent-Child Trace Tracking ==")
     tm = TraceManager()
 
     root = tm.create("main", trace_id="trace-001")
@@ -266,60 +266,60 @@ def verify_trace():
     child2 = tm.create("Plan", parent_id=root.agent_id, trace_id="trace-001")
     other = tm.create("other", trace_id="trace-002")
 
-    check("创建节点成功", tm.get(root.agent_id) is not None)
-    check("parent_id 正确", child1.parent_id == root.agent_id)
-    check("trace_id 继承", child1.trace_id == "trace-001")
+    check("Node created successfully", tm.get(root.agent_id) is not None)
+    check("parent_id is correct", child1.parent_id == root.agent_id)
+    check("trace_id is inherited", child1.trace_id == "trace-001")
 
     tm.update(root.agent_id, input_tokens=1000, output_tokens=500)
     tm.update(child1.agent_id, input_tokens=200, output_tokens=100)
     tm.update(child2.agent_id, input_tokens=300, output_tokens=150)
 
     tree = tm.get_tree("trace-001")
-    check("get_tree 返回同 trace 节点", len(tree) == 3)
-    check("get_tree 不含其他 trace", other.agent_id not in {n.agent_id for n in tree})
+    check("get_tree returns nodes from the same trace", len(tree) == 3)
+    check("get_tree excludes other traces", other.agent_id not in {n.agent_id for n in tree})
 
     total_in, total_out = tm.get_total_tokens("trace-001")
-    check("汇总 input_tokens=1500", total_in == 1500)
-    check("汇总 output_tokens=750", total_out == 750)
+    check("Aggregated input_tokens=1500", total_in == 1500)
+    check("Aggregated output_tokens=750", total_out == 750)
 
     tm.complete(child1.agent_id, "completed")
-    check("complete 设置状态", tm.get(child1.agent_id).status == "completed")
-    check("complete 设置 end_time", tm.get(child1.agent_id).end_time is not None)
+    check("complete sets status", tm.get(child1.agent_id).status == "completed")
+    check("complete sets end_time", tm.get(child1.agent_id).end_time is not None)
 
 # ---------------------------------------------------------------------------
-# 5. TaskManager 后台任务
+# 5. TaskManager background tasks
 # ---------------------------------------------------------------------------
 async def verify_task_manager():
-    print("\n== 5. TaskManager 后台任务 ==")
+    print("\n== 5. TaskManager Background Tasks ==")
 
     from unittest.mock import MagicMock, AsyncMock
 
     agent = MagicMock()
     agent.total_input_tokens = 200
     agent.total_output_tokens = 80
-    agent.run_to_completion = AsyncMock(return_value="搜索完成，找到 15 个 .py 文件")
+    agent.run_to_completion = AsyncMock(return_value="Search complete, found 15 .py files")
 
     tm = TaskManager()
 
     # launch
-    task_id = tm.launch(agent, "搜索项目结构", name="explore-task")
-    check("launch 返回 task_id", task_id is not None and len(task_id) > 0)
-    check("任务初始状态 running", tm.get(task_id).status == "running")
+    task_id = tm.launch(agent, "Search project structure", name="explore-task")
+    check("launch returns task_id", task_id is not None and len(task_id) > 0)
+    check("Initial task status is running", tm.get(task_id).status == "running")
 
     await asyncio.sleep(0.2)
 
     bg = tm.get(task_id)
-    check("任务完成后状态 completed", bg.status == "completed")
-    check("任务结果正确", "15 个 .py 文件" in bg.result)
-    check("token 统计更新", bg.progress.input_tokens == 200)
+    check("Task status is completed after finishing", bg.status == "completed")
+    check("Task result is correct", "15 .py files" in bg.result)
+    check("Token statistics are updated", bg.progress.input_tokens == 200)
 
     # poll
     completed = tm.poll_completed()
-    check("poll_completed 返回已完成任务", len(completed) == 1)
-    check("二次 poll 为空", len(tm.poll_completed()) == 0)
+    check("poll_completed returns completed tasks", len(completed) == 1)
+    check("Second poll is empty", len(tm.poll_completed()) == 0)
 
     # list
-    check("list_tasks 包含任务", len(tm.list_tasks()) == 1)
+    check("list_tasks includes task", len(tm.list_tasks()) == 1)
 
     # cancel
     slow_agent = MagicMock()
@@ -331,87 +331,87 @@ async def verify_task_manager():
         return "done"
 
     slow_agent.run_to_completion = slow_run
-    slow_id = tm.launch(slow_agent, "慢任务", name="slow")
+    slow_id = tm.launch(slow_agent, "Slow task", name="slow")
     await asyncio.sleep(0.1)
-    check("cancel 运行中任务", tm.cancel(slow_id) is True)
+    check("Cancel running task", tm.cancel(slow_id) is True)
     await asyncio.sleep(0.2)
-    check("cancel 后状态", tm.get(slow_id).status == "cancelled")
+    check("Status after cancel", tm.get(slow_id).status == "cancelled")
 
     # failed
     bad_agent = MagicMock()
     bad_agent.total_input_tokens = 0
     bad_agent.total_output_tokens = 0
     bad_agent.run_to_completion = AsyncMock(side_effect=RuntimeError("boom"))
-    bad_id = tm.launch(bad_agent, "会失败的任务", name="bad")
+    bad_id = tm.launch(bad_agent, "Task that will fail", name="bad")
     await asyncio.sleep(0.2)
-    check("异常任务状态 failed", tm.get(bad_id).status == "failed")
-    check("异常任务包含错误信息", "boom" in tm.get(bad_id).result)
+    check("Failed task status is failed", tm.get(bad_id).status == "failed")
+    check("Failed task includes error message", "boom" in tm.get(bad_id).result)
 
 # ---------------------------------------------------------------------------
-# 6. Notification 通知
+# 6. Notification
 # ---------------------------------------------------------------------------
 def verify_notification():
-    print("\n== 6. task-notification 通知 ==")
+    print("\n== 6. task-notification Notification ==")
     from codeferry.agents.task_manager import BackgroundTask
 
     bg = BackgroundTask(
         id="abc123",
         name="security-reviewer",
         agent=None,
-        task="审查 config.py",
+        task="Review config.py",
         status="completed",
-        result="发现 1 个 Critical: 硬编码 API Key",
+        result="Found 1 Critical issue: hard-coded API key",
         start_time=100.0,
         end_time=145.0,
     )
 
     text = format_task_notification(bg)
-    check("通知包含 <task-notification>", "<task-notification>" in text)
-    check("通知包含 task ID", "abc123" in text)
-    check("通知包含 agent name", "security-reviewer" in text)
-    check("通知包含 status", "completed" in text)
-    check("通知包含 result", "硬编码 API Key" in text)
-    check("通知包含 </task-notification>", "</task-notification>" in text)
+    check("Notification contains <task-notification>", "<task-notification>" in text)
+    check("Notification contains task ID", "abc123" in text)
+    check("Notification contains agent name", "security-reviewer" in text)
+    check("Notification contains status", "completed" in text)
+    check("Notification contains result", "hard-coded API key" in text)
+    check("Notification contains </task-notification>", "</task-notification>" in text)
 
     conv = ConversationManager()
     inject_task_notifications(conv, [bg])
-    check("注入后消息角色为 user", conv.history[0].role == "user")
-    check("注入后内容包含通知", "<task-notification>" in conv.history[0].content)
+    check("Injected message role is user", conv.history[0].role == "user")
+    check("Injected content contains notification", "<task-notification>" in conv.history[0].content)
 
 # ---------------------------------------------------------------------------
-# 7. Config 配置
+# 7. Config
 # ---------------------------------------------------------------------------
 
 def verify_config():
-    print("\n== 7. 配置扩展 ==")
+    print("\n== 7. Config Extensions ==")
     config_path = Path(__file__).resolve().parent.parent / "config.yaml"
     if not config_path.exists():
-        check("config.yaml 存在", False, str(config_path))
+        check("config.yaml exists", False, str(config_path))
         return
 
     config = load_config(config_path)
-    check("enable_fork 读取成功", isinstance(config.enable_fork, bool))
-    check("enable_verification_agent 读取成功", isinstance(config.enable_verification_agent, bool))
+    check("enable_fork is read successfully", isinstance(config.enable_fork, bool))
+    check("enable_verification_agent is read successfully", isinstance(config.enable_verification_agent, bool))
     check("enable_fork=True", config.enable_fork is True)
     check("enable_verification_agent=True", config.enable_verification_agent is True)
 
 # ---------------------------------------------------------------------------
-# 8. 权限模式
+# 8. Permission mode
 # ---------------------------------------------------------------------------
 def verify_permission():
-    print("\n== 8. DONT_ASK 权限模式 ==")
+    print("\n== 8. DONT_ASK Permission Mode ==")
     from codeferry.permissions.modes import PermissionMode, mode_decide
 
-    check("DONT_ASK 枚举值", PermissionMode.DONT_ASK.value == "dontAsk")
+    check("DONT_ASK enum value", PermissionMode.DONT_ASK.value == "dontAsk")
     check("DONT_ASK read=allow", mode_decide(PermissionMode.DONT_ASK, "read") == "allow")
     check("DONT_ASK write=allow", mode_decide(PermissionMode.DONT_ASK, "write") == "allow")
     check("DONT_ASK command=allow", mode_decide(PermissionMode.DONT_ASK, "command") == "allow")
 
 # ---------------------------------------------------------------------------
-# 9. Agent 扩展字段
+# 9. Agent extension fields
 # ---------------------------------------------------------------------------
 def verify_agent_fields():
-    print("\n== 9. Agent 扩展字段 ==")
+    print("\n== 9. Agent Extension Fields ==")
     from codeferry.agent import Agent
     from unittest.mock import MagicMock
 
@@ -420,56 +420,56 @@ def verify_agent_fields():
         registry=ToolRegistry(),
         protocol="anthropic",
     )
-    check("agent_id 自动生成", agent.agent_id is not None and len(agent.agent_id) == 12)
-    check("parent_id 默认 None", agent.parent_id is None)
-    check("trace_id 默认 None", agent.trace_id is None)
+    check("agent_id is generated automatically", agent.agent_id is not None and len(agent.agent_id) == 12)
+    check("parent_id defaults to None", agent.parent_id is None)
+    check("trace_id defaults to None", agent.trace_id is None)
 
-    agent.set_agent_catalog("## Agents\n- Explore: 搜索")
-    check("set_agent_catalog 生效", "Explore" in agent._agent_catalog)
+    agent.set_agent_catalog("## Agents\n- Explore: search")
+    check("set_agent_catalog takes effect", "Explore" in agent._agent_catalog)
 
 # ---------------------------------------------------------------------------
-# 10. AgentTool 参数模型
+# 10. AgentTool parameter model
 # ---------------------------------------------------------------------------
 def verify_agent_tool():
-    print("\n== 10. AgentTool 参数与 schema ==")
+    print("\n== 10. AgentTool Parameters and Schema ==")
     from codeferry.tools.agent_tool import AgentTool, AgentToolParams
 
     params = AgentToolParams(
-        prompt="探索项目结构",
-        description="代码探索",
+        prompt="Explore project structure",
+        description="Code exploration",
         subagent_type="Explore",
         model="haiku",
         run_in_background=True,
         name="my-explore",
     )
-    check("必填参数 prompt", params.prompt == "探索项目结构")
-    check("必填参数 description", params.description == "代码探索")
-    check("可选 subagent_type", params.subagent_type == "Explore")
-    check("可选 model", params.model == "haiku")
-    check("可选 run_in_background", params.run_in_background is True)
-    check("可选 name", params.name == "my-explore")
+    check("Required parameter prompt", params.prompt == "Explore project structure")
+    check("Required parameter description", params.description == "Code exploration")
+    check("Optional subagent_type", params.subagent_type == "Explore")
+    check("Optional model", params.model == "haiku")
+    check("Optional run_in_background", params.run_in_background is True)
+    check("Optional name", params.name == "my-explore")
 
-    # Schema 验证
+    # Schema verification.
     schema = AgentToolParams.model_json_schema()
     required = schema.get("required", [])
-    check("prompt 是 required", "prompt" in required)
-    check("description 是 required", "description" in required)
-    check("subagent_type 不是 required", "subagent_type" not in required)
+    check("prompt is required", "prompt" in required)
+    check("description is required", "description" in required)
+    check("subagent_type is not required", "subagent_type" not in required)
 
-    # worktree 未实现
+    # worktree is not implemented.
     params_wt = AgentToolParams(
         prompt="test", description="test", isolation="worktree"
     )
-    check("isolation 参数可设置", params_wt.isolation == "worktree")
+    check("isolation parameter can be set", params_wt.isolation == "worktree")
 
 # ===========================================================================
-# 主流程
+# Main flow
 # ===========================================================================
 async def main():
     global passed, failed
 
     print("=" * 60)
-    print("  SubAgent 系统验证（第 12 章）")
+    print("  SubAgent System Verification (Chapter 12)")
     print("=" * 60)
 
     loader = verify_loader()
@@ -486,9 +486,9 @@ async def main():
     print("\n" + "=" * 60)
     total = passed + failed
     if failed == 0:
-        print(f"  \033[32m全部通过: {passed}/{total}\033[0m")
+        print(f"  \033[32mAll passed: {passed}/{total}\033[0m")
     else:
-        print(f"  \033[31m失败: {failed}/{total}\033[0m")
+        print(f"  \033[31mFailed: {failed}/{total}\033[0m")
     print("=" * 60)
 
     return failed == 0

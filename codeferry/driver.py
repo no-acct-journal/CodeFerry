@@ -10,19 +10,22 @@ else:
 
 
 class NoAltScreenDriver(_BaseDriver):
-    """跳过备用屏（alternate screen）的 driver，让输出保留在主终端的
-    滚动回看（scrollback）区域中——与 Claude Code 的渲染行为保持一致。
-    自动根据平台选择 LinuxDriver 或 WindowsDriver 作为基类。
+    """Driver that skips the alternate screen and keeps output in terminal scrollback.
 
-    原理：去掉 alt screen 切换码，并在进入应用模式时输出足够多的空行，
-    将已有终端内容推入 scrollback，Textual 在"新页面"上渲染。"""
+    This matches Claude Code rendering behavior and automatically chooses LinuxDriver
+    or WindowsDriver as the base class by platform.
+
+    Mechanism: remove alt-screen switch codes and print enough blank lines when
+    entering application mode to push existing terminal content into scrollback,
+    letting Textual render on a "new page".
+    """
 
     def start_application_mode(self):
         try:
             rows = os.get_terminal_size().lines
         except OSError:
             rows = 24
-        # 在 Textual 接管终端之前，用换行把已有内容推入 scrollback
+        # Push existing content into scrollback with newlines before Textual takes over the terminal.
         sys.stdout.write("\n" * rows)
         sys.stdout.flush()
         super().start_application_mode()

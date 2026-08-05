@@ -17,10 +17,10 @@ _PERM_OPTIONS = [
 
 
 class InlinePermissionWidget(Vertical, can_focus=True):
-    """渲染在聊天区域内部的内联权限确认提示。
+    """Render an inline permission confirmation prompt inside the chat area.
 
-    与 Go 版 TUI 的权限对话框一致：工具名 + 描述 + 带编号的
-    选项，支持方向键导航 + 回车确认。
+    Matches the Go TUI permission dialog: tool name, description, numbered options,
+    arrow-key navigation, and Enter confirmation.
     """
 
     BINDINGS = [

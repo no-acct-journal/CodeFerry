@@ -3,14 +3,14 @@ from __future__ import annotations
 import re
 
 _DANGEROUS_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"rm\s+-[a-z]*r[a-z]*f[a-z]*\s+/\s*$"), "递归强制删除根目录"),
-    (re.compile(r"mkfs\."), "格式化磁盘"),
-    (re.compile(r"dd\s+if=.*of=/dev/"), "直接写磁盘设备"),
-    (re.compile(r"chmod\s+-R\s+777\s+/"), "递归修改根目录权限"),
+    (re.compile(r"rm\s+-[a-z]*r[a-z]*f[a-z]*\s+/\s*$"), "recursive forced deletion of the root directory"),
+    (re.compile(r"mkfs\."), "disk formatting"),
+    (re.compile(r"dd\s+if=.*of=/dev/"), "direct write to disk device"),
+    (re.compile(r"chmod\s+-R\s+777\s+/"), "recursive permission change on the root directory"),
     (re.compile(r":\(\)\{\s*:\|:&\s*\};:"), "fork bomb"),
-    (re.compile(r"curl\s+.*\|\s*(ba)?sh"), "管道执行远程脚本"),
-    (re.compile(r"wget\s+.*\|\s*(ba)?sh"), "管道执行远程脚本"),
-    (re.compile(r">\s*/dev/sd"), "覆盖磁盘设备"),
+    (re.compile(r"curl\s+.*\|\s*(ba)?sh"), "piped execution of a remote script"),
+    (re.compile(r"wget\s+.*\|\s*(ba)?sh"), "piped execution of a remote script"),
+    (re.compile(r">\s*/dev/sd"), "overwrite disk device"),
 ]
 
 

@@ -85,20 +85,20 @@ def resolve_agent_tools(
 ) -> ToolRegistry:
     all_tools = {t.name: t for t in parent_registry.list_tools()}
 
-    # 第 0 层：MCP 工具始终放行，先分离出来再做后续过滤
+    # Layer 0: MCP tools are always allowed; separate them before further filtering.
     mcp_tools = {name: tool for name, tool in all_tools.items() if _is_mcp_tool(name)}
     all_tools = {name: tool for name, tool in all_tools.items() if not _is_mcp_tool(name)}
 
-    # 第 1 层：全局禁用工具
+    # Layer 1: globally disallowed tools.
     for name in ALL_AGENT_DISALLOWED_TOOLS:
         all_tools.pop(name, None)
 
-    # 第 2 层：自定义 agent 额外限制
+    # Layer 2: additional restrictions for custom agents.
     if definition.source in ("project", "user", "plugin"):
         for name in CUSTOM_AGENT_DISALLOWED_TOOLS:
             all_tools.pop(name, None)
 
-    # 第 3 层：后台任务白名单
+    # Layer 3: background task allowlist.
     if is_background:
         all_tools = {
             name: tool
@@ -106,7 +106,7 @@ def resolve_agent_tools(
             if name in ASYNC_AGENT_ALLOWED_TOOLS
         }
 
-    # 第 4 层：按 agent 定义中的禁用/允许列表过滤
+    # Layer 4: filter by the agent definition's disallowed/allowed lists.
     if definition.disallowed_tools:
         for name in definition.disallowed_tools:
             all_tools.pop(name, None)
@@ -155,7 +155,7 @@ def build_teammate_tools(
         filtered.pop("TeamCreate", None)
         filtered.pop("TeamDelete", None)
 
-    # 应用 agent 定义中的工具限制
+    # Apply tool restrictions from the agent definition.
     if definition is not None:
         if definition.disallowed_tools:
             for name in definition.disallowed_tools:

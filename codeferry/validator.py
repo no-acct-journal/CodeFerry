@@ -15,16 +15,17 @@ VALID_TEAMMATE_MODES = {"", "in-process"}
 
 DEFAULT_CONTEXT_WINDOW = 200_000
 
-# 内置的"模型名子串 -> context window（最大输入 token 数）"映射表，
-# 是 context window 回退链的第 3 层（见 ProviderConfig.get_context_window）。
-# 按从最具体到最通用排序，第一个子串命中即生效。值仅为合理起始点，
-# 模型更新/重命名后可能过时。如果值不准确，在配置中设置 context_window 覆盖（最高优先级）。
+# Built-in "model name substring -> context window (maximum input tokens)" map.
+# This is layer 3 of the context-window fallback chain; see ProviderConfig.get_context_window.
+# Entries are ordered from most specific to most general, and the first substring match wins.
+# Values are only reasonable starting points and may become stale after model updates or renames.
+# If a value is inaccurate, override it with context_window in config, which has highest priority.
 MODEL_CONTEXT_WINDOWS: list[tuple[str, int]] = [
-    ("1m", 1_000_000),       # 也覆盖 "-1m" 后缀（如 claude-...-1m）
-    ("gpt-4.1", 1_000_000),  # GPT-4.1 系列的 window 为 1M
+    ("1m", 1_000_000),       # Also covers "-1m" suffixes, such as claude-...-1m.
+    ("gpt-4.1", 1_000_000),  # The GPT-4.1 family has a 1M window.
     ("gpt-4o", 128_000),
     ("gpt-4-turbo", 128_000),
-    ("o1", 200_000),         # OpenAI 推理模型 o1 / o3 / o4
+    ("o1", 200_000),         # OpenAI reasoning models o1 / o3 / o4.
     ("o3", 200_000),
     ("o4", 200_000),
     ("gpt-3.5", 16_385),
@@ -33,8 +34,10 @@ MODEL_CONTEXT_WINDOWS: list[tuple[str, int]] = [
 
 
 def lookup_model_context_window(model: str) -> int:
-    """通过子串匹配（第 3 层），返回内置映射表中该模型对应的
-    context window；没有匹配则返回 0。"""
+    """Return the built-in context window for a model via substring matching (layer 3).
+
+    Return 0 when no match is found.
+    """
     m = model.lower()
     for substr, window in MODEL_CONTEXT_WINDOWS:
         if substr in m:
@@ -47,7 +50,7 @@ class ConfigError(Exception):
 
 
 def validate_providers(raw_providers: list) -> list[dict]:
-    """校验 providers 列表，返回清洗后的 provider 字典列表。"""
+    """Validate the providers list and return sanitized provider dictionaries."""
     if not isinstance(raw_providers, list) or len(raw_providers) == 0:
         raise ConfigError("At least one provider must be configured")
 
@@ -67,10 +70,10 @@ def validate_providers(raw_providers: list) -> list[dict]:
                 f"must be one of: {', '.join(sorted(VALID_PROTOCOLS))}"
             )
 
-        # 默认为 0（"未设置"）而非硬编码的 window 值：0 会让
-        # ProviderConfig.get_context_window() 走四层回退链解析
-        #（自动拉取 / 映射表 / 默认值）。配置中显式指定的值仍须为正整数，
-        # 且作为最高优先级覆盖。
+        # Default to 0 ("unset") instead of a hard-coded window value: 0 makes
+        # ProviderConfig.get_context_window() use the four-layer fallback chain
+        # (automatic fetch / mapping table / default value). Explicit config
+        # values must still be positive integers and override all fallbacks.
         context_window = entry.get("context_window", 0)
         if not isinstance(context_window, int) or isinstance(context_window, bool) or context_window < 0:
             raise ConfigError(
@@ -104,7 +107,7 @@ def validate_providers(raw_providers: list) -> list[dict]:
 
 
 def validate_permission_mode(mode: str) -> str:
-    """校验 permission_mode 取值。"""
+    """Validate the permission_mode value."""
     if mode not in VALID_PERMISSION_MODES:
         raise ConfigError(
             f"Invalid permission_mode '{mode}', "
@@ -114,7 +117,7 @@ def validate_permission_mode(mode: str) -> str:
 
 
 def validate_mcp_servers(raw_mcp: list | None) -> list[dict]:
-    """校验 mcp_servers 配置段，返回清洗后的 server 配置字典列表。"""
+    """Validate the mcp_servers section and return sanitized server config dictionaries."""
     if raw_mcp is None:
         return []
 
@@ -153,7 +156,7 @@ def validate_mcp_servers(raw_mcp: list | None) -> list[dict]:
 
 
 def validate_hooks(raw_hooks: list | None) -> list:
-    """校验 hooks 配置段。"""
+    """Validate the hooks section."""
     if raw_hooks is None:
         return []
     if not isinstance(raw_hooks, list):
@@ -162,14 +165,14 @@ def validate_hooks(raw_hooks: list | None) -> list:
 
 
 def validate_bool_field(value: object, field_name: str) -> bool:
-    """校验一个布尔类型的配置字段。"""
+    """Validate a boolean configuration field."""
     if not isinstance(value, bool):
         raise ConfigError(f"'{field_name}' must be a boolean")
     return value
 
 
 def validate_worktree(raw_wt: dict | None) -> dict:
-    """校验 worktree 配置段，返回清洗后的配置字典。"""
+    """Validate the worktree section and return a sanitized config dictionary."""
     defaults = {
         "symlink_directories": ["node_modules", ".venv", "vendor"],
         "stale_cleanup_interval": 3600,
@@ -202,7 +205,7 @@ def validate_worktree(raw_wt: dict | None) -> dict:
 
 
 def validate_teammate_mode(mode: object) -> str:
-    """校验 teammate_mode 取值。"""
+    """Validate the teammate_mode value."""
     if not isinstance(mode, str) or mode not in VALID_TEAMMATE_MODES:
         raise ConfigError(
             f"Invalid teammate_mode '{mode}', "
@@ -212,9 +215,11 @@ def validate_teammate_mode(mode: object) -> str:
 
 
 def validate_config_structure(raw: object) -> dict:
-    """校验的主入口。校验解析后的原始配置，返回清洗后的字典。
+    """Main validation entry point.
 
-    返回的字典包含以下键：
+    Validate the parsed raw config and return a sanitized dictionary.
+
+    The returned dictionary contains these keys:
         providers、permission_mode、mcp_servers、hooks、
         enable_fork、enable_verification_agent、worktree、
         teammate_mode、enable_coordinator_mode
